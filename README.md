@@ -27,11 +27,13 @@ Installs a pinned, checksum-verified [BaryoVM](https://github.com/BaryoDev/Baryo
 ## What it does
 
 1. Picks the archive for the runner: Linux or macOS, X64 or ARM64.
-2. Downloads the archive and `checksums.txt` from the same release.
-3. Checks the SHA-256 of the archive against `checksums.txt` and fails the step on a mismatch or a missing line, before anything is extracted.
-4. Extracts to a versioned directory under `runner.tool_cache` and adds it to `PATH`.
+2. Downloads `checksums.txt` from the release on every run, and the archive unless it is cached.
+3. Checks the SHA-256 of the archive (cached or fresh) against `checksums.txt` and fails the step on a mismatch or a missing line, before anything is extracted.
+4. Extracts a fresh binary to a versioned directory under `runner.tool_cache` and adds it to `PATH`.
 5. Sets `BARYOVM_HOME` to a directory under `RUNNER_TEMP`, so state stays out of the workspace.
-6. Caches that directory with `actions/cache`, keyed by version, OS and architecture. A cache hit skips the download.
+6. Caches the archive, never the binary, with `actions/cache`, keyed by version, OS and architecture. A cache hit skips the archive download, not the check.
+
+The checksum file comes from the same release as the archive, so it proves the download is intact, not who published it. Downloads are https only, redirects included.
 
 The action is composite shell, with nothing to build. Inputs reach the script as environment variables, never interpolated into the script text.
 
