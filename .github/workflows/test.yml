@@ -29,7 +29,7 @@ jobs:
           set -euo pipefail
           test "$OUT_VERSION" = "0.5.0"
           test -x "$OUT_PATH/baryovm"
-          baryovm version | tee version.txt
+          baryovm version 2>&1 | tee version.txt
           grep -q "0.5.0" version.txt
           case "$BARYOVM_HOME" in "$RUNNER_TEMP"/*) ;; *) echo "BARYOVM_HOME not under RUNNER_TEMP"; exit 1;; esac
 
@@ -69,7 +69,7 @@ jobs:
           INPUT_VERSION: 9.9.9
         run: |
           set -uo pipefail
-          out="$(bash scripts/install.sh install 2>&1)"; rc=$?
+          rc=0; out="$(bash scripts/install.sh install 2>&1)" || rc=$?
           echo "$out"
           test "$rc" -ne 0
           echo "$out" | grep -q "checksum mismatch for baryovm_9.9.9_linux_"
