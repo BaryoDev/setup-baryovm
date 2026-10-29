@@ -41,7 +41,7 @@ No SSH key handling and no release. It installs the tool and stops, so the job's
 
 ## Running BaryoVM from CI
 
-Running BaryoVM from CI is only safe once host key verification is in place. That is BaryoVM #12, which is closed (Sep 21 2026), and #44, which is closed (Sep 26 2026). Read both before you give a job a key to a real host, and check that the BaryoVM version you pin includes those fixes.
+Running BaryoVM from CI is only safe once host keys are verified. BaryoVM #12 added host key verification and shipped before 0.5.0, so pin 0.5.0 or later. The guide for running BaryoVM from CI (keys, known_hosts, secrets) is BaryoVM #85, which is still open. Read it before you give a job a key to a real host.
 
 ## Tests
 
