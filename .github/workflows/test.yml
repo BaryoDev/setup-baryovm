@@ -1,0 +1,74 @@
+name: test
+
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  install:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, ubuntu-24.04-arm, macos-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      # actions/checkout v4.3.1
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5
+      - id: setup
+        uses: ./
+        with:
+          version: 0.5.0
+      - name: baryovm reports the pinned version
+        env:
+          OUT_VERSION: ${{ steps.setup.outputs.version }}
+          OUT_PATH: ${{ steps.setup.outputs.path }}
+        run: |
+          set -euo pipefail
+          test "$OUT_VERSION" = "0.5.0"
+          test -x "$OUT_PATH/baryovm"
+          baryovm version | tee version.txt
+          grep -q "0.5.0" version.txt
+          case "$BARYOVM_HOME" in "$RUNNER_TEMP"/*) ;; *) echo "BARYOVM_HOME not under RUNNER_TEMP"; exit 1;; esac
+
+  latest-refused:
+    runs-on: ubuntu-latest
+    steps:
+      # actions/checkout v4.3.1
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5
+      - id: setup
+        uses: ./
+        continue-on-error: true
+        with:
+          version: latest
+      - name: latest was refused
+        env:
+          OUTCOME: ${{ steps.setup.outcome }}
+        run: test "$OUTCOME" = "failure"
+
+  tampered:
+    runs-on: ubuntu-latest
+    steps:
+      # actions/checkout v4.3.1
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5
+      - name: serve a release whose archive does not match checksums.txt
+        run: |
+          set -euo pipefail
+          d="$RUNNER_TEMP/fake/v9.9.9"
+          mkdir -p "$d"
+          for a in amd64 arm64; do
+            echo "not a real archive" > "$d/baryovm_9.9.9_linux_$a.tar.gz"
+            echo "0000000000000000000000000000000000000000000000000000000000000000  baryovm_9.9.9_linux_$a.tar.gz" >> "$d/checksums.txt"
+          done
+          echo "BARYOVM_DOWNLOAD_BASE=file://$RUNNER_TEMP/fake" >> "$GITHUB_ENV"
+      - id: setup
+        uses: ./
+        continue-on-error: true
+        with:
+          version: 9.9.9
+      - name: tampered archive failed the step
+        env:
+          OUTCOME: ${{ steps.setup.outcome }}
+        run: test "$OUTCOME" = "failure"

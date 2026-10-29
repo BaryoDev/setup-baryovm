@@ -1,0 +1,51 @@
+name: Setup BaryoVM
+description: Install a pinned, checksum-verified BaryoVM release and put it on PATH.
+author: BaryoDev
+branding:
+  icon: download
+  color: green
+
+inputs:
+  version:
+    description: BaryoVM version to install, for example 0.5.0 (a leading v is accepted). "latest" is refused unless allow-latest is true.
+    required: true
+  allow-latest:
+    description: Set to true to allow version "latest", resolved through the GitHub API.
+    required: false
+    default: "false"
+  github-token:
+    description: Token used only for the GitHub API (resolving latest) and to avoid rate limits on downloads.
+    required: false
+    default: ${{ github.token }}
+
+outputs:
+  version:
+    description: The version that was installed.
+    value: ${{ steps.resolve.outputs.version }}
+  path:
+    description: Directory that holds the baryovm binary.
+    value: ${{ steps.resolve.outputs.dir }}
+
+runs:
+  using: composite
+  steps:
+    - id: resolve
+      shell: bash
+      env:
+        INPUT_VERSION: ${{ inputs.version }}
+        INPUT_ALLOW_LATEST: ${{ inputs.allow-latest }}
+        INPUT_TOKEN: ${{ inputs.github-token }}
+      run: bash "$GITHUB_ACTION_PATH/scripts/install.sh" resolve
+
+    # actions/cache v4.3.0
+    - uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830
+      with:
+        path: ${{ steps.resolve.outputs.dir }}
+        key: baryovm-${{ steps.resolve.outputs.version }}-${{ runner.os }}-${{ runner.arch }}
+
+    - id: install
+      shell: bash
+      env:
+        INPUT_VERSION: ${{ steps.resolve.outputs.version }}
+        INPUT_TOKEN: ${{ inputs.github-token }}
+      run: bash "$GITHUB_ACTION_PATH/scripts/install.sh" install
