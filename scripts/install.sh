@@ -6,6 +6,7 @@ set -euo pipefail
 REPO="BaryoDev/BaryoVM"
 BASE="https://github.com/${REPO}/releases/download"
 
+work=""
 die() { echo "setup-baryovm: error: $*" >&2; exit 1; }
 
 # Tests only: a local file:// directory holding the archive and checksums.txt.
@@ -73,11 +74,13 @@ resolve() {
 # verifies the archive (cached or fresh) and extracts a new binary from it.
 install() {
   local v="${INPUT_VERSION:?}"
-  local dir cache archive work
+  local dir cache archive
   dir="$(tool_dir "$v")"
   cache="$(archive_dir "$v")"
   archive="baryovm_${v}_$(os_name)_$(arch_name).tar.gz"
   work="$(mktemp -d "${RUNNER_TEMP:?}/baryovm-dl.XXXXXX")"
+  # work is global so the trap can still see it after install() returns or die exits.
+  trap 'rm -rf "$work"' EXIT
   auth=()
   [ -n "${INPUT_TOKEN:-}" ] && [[ "$BASE" == https://github.com/* ]] && auth=(-H "Authorization: Bearer ${INPUT_TOKEN}")
   fetch "$work/checksums.txt" "$BASE/v$v/checksums.txt" || die "download failed: $BASE/v$v/checksums.txt"
@@ -102,7 +105,6 @@ install() {
   tar -xzf "$cache/$archive" -C "$dir.tmp" baryovm
   rm -rf "$dir"
   mv "$dir.tmp" "$dir"
-  rm -rf "$work"
   chmod +x "$dir/baryovm"
   local home="${RUNNER_TEMP}/baryovm-home"
   mkdir -p "$home"
