@@ -47,7 +47,7 @@ Running BaryoVM from CI is only safe once host keys are verified. BaryoVM #12 ad
 
 ## Tests
 
-`.github/workflows/test.yml` installs 0.5.0 on `ubuntu-latest`, `ubuntu-24.04-arm` and `macos-latest` and checks `baryovm version`. Two more jobs check that `latest` is refused and that an archive that does not match `checksums.txt` fails the step. The tamper job points the script at a local `file://` release through `BARYOVM_DOWNLOAD_BASE`, which exists for tests only.
+`.github/workflows/test.yml` installs 0.5.0 on `ubuntu-latest`, `ubuntu-24.04-arm`, `macos-latest` and `macos-15-intel` and checks `baryovm version`. Two more jobs check that `latest` is refused and that an archive that does not match `checksums.txt` fails the step. The tamper job points the script at a local `file://` release through `BARYOVM_DOWNLOAD_BASE`, which exists for tests only.
 
 ## License
 
